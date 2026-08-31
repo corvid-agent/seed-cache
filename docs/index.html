@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SEED-CACHE — the last 8 seeds, always on the shelf</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600&family=Bebas+Neue&family=Share+Tech+Mono&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="crt" id="crt">
+    <header>
+      <h1>Seed-Cache</h1>
+      <div class="meta" id="keeper-meta">TestNet · Arcron keeper</div>
+    </header>
+
+    <section class="status-row">
+      <div class="label">Status</div>
+      <div class="flaps big" id="status" aria-label="board status"></div>
+      <div class="meta" id="subhead">seeking</div>
+    </section>
+
+    <section class="board" id="board">
+      <div class="cell">
+        <div class="label">Seeds stored</div>
+        <div class="flaps" id="stat-stored" aria-label="total seeds ever cached"></div>
+      </div>
+      <div class="cell">
+        <div class="label">Last seen round</div>
+        <div class="flaps" id="stat-seen" aria-label="last revealed round cached"></div>
+      </div>
+      <div class="cell">
+        <div class="label">Chain round</div>
+        <div class="flaps" id="stat-round" aria-label="chain last round"></div>
+      </div>
+      <div class="cell">
+        <div class="label">Shelf age</div>
+        <div class="flaps" id="stat-age" aria-label="rounds since last shelved seed"></div>
+      </div>
+      <div class="cell">
+        <div class="label">Keeper</div>
+        <div class="flaps" id="stat-keeper" aria-label="keeper app id"></div>
+      </div>
+      <div class="cell">
+        <div class="label">Beacon</div>
+        <div class="flaps" id="stat-target" aria-label="target beacon app id"></div>
+      </div>
+    </section>
+
+    <section class="slots-wrap">
+      <div class="label">Ring — freshest first</div>
+      <div id="slots" aria-label="the 8 ring slots"></div>
+    </section>
+
+    <p class="notes" id="notes">
+      Every Arcron keeper tick reads the beacon's
+      <code>revealed_round</code> / <code>revealed_seed</code> globals and
+      shelves the pair in the next slot of an 8-slot ring (one 320-byte box
+      named <code>ring</code>, 8-byte round + 32-byte seed per slot). The
+      board decodes the box straight from algod; the chain is the source of
+      truth. Contract:
+      <a href="https://github.com/corvid-agent/seed-cache/blob/main/smart_contracts/seed_cache/contract.py">smart_contracts/seed_cache/contract.py</a>.
+    </p>
+
+    <footer class="foot">Unaudited. TestNet only. Not deployed. Read-only, no wallet.</footer>
+  </main>
+  <script src="./app.js"></script>
+</body>
+</html>
