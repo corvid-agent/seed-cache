@@ -1,0 +1,9 @@
+{
+  "appId": 0,
+  "network": "testnet",
+  "keeperAppId": 769891898,
+  "targetAppId": 770742777,
+  "upkeepId": 0,
+  "interval": 1700,
+  "notes": "not deployed - ring cache of arcron-beacon revealed seeds, store() via arcron keeper, interval 1700r"
+}
