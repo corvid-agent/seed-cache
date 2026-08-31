@@ -1,0 +1,452 @@
+#pragma version 11
+#pragma typetrack false
+
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
+    intcblock 0 1 8 40
+    bytecblock 0x72696e67 "keeper_app" "target_app" "stored" "last_seen_round" 0x151f7c75
+    txn ApplicationID
+    bnz main_after_if_else@2
+    // contract.py:74-76
+    // # App id of the Arcron keeper allowed to call `store`. Zero until
+    // # `set_keeper`. Not an interval. Not a create arg.
+    // self.keeper_app = GlobalState(UInt64(0))
+    bytec_1 // "keeper_app"
+    intc_0 // 0
+    app_global_put
+    // contract.py:77-79
+    // # App id of the beacon whose seeds are cached (770742777 on
+    // # TestNet). Zero until `set_target`.
+    // self.target_app = GlobalState(UInt64(0))
+    bytec_2 // "target_app"
+    intc_0 // 0
+    app_global_put
+    // contract.py:80-81
+    // # Total seeds ever stored. The write slot is stored % 8.
+    // self.stored = GlobalState(UInt64(0))
+    bytec_3 // "stored"
+    intc_0 // 0
+    app_global_put
+    // contract.py:82-84
+    // # Last revealed_round consumed, so a keeper tick between reveals
+    // # is a no-op instead of a duplicate write.
+    // self.last_seen_round = GlobalState(UInt64(0))
+    bytec 4 // "last_seen_round"
+    intc_0 // 0
+    app_global_put
+
+main_after_if_else@2:
+    // contract.py:67
+    // class SeedCache(ARC4Contract):
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    bz main_create_NoOp@10
+    pushbytess 0xc4c1d8f7 0x376988ee 0x6c5a8989 0xfc0d0547 // method "set_keeper(uint64)void", method "set_target(uint64)void", method "store()uint64", method "read(uint64)byte[]"
+    txna ApplicationArgs 0
+    match set_keeper set_target store read
+    err
+
+main_create_NoOp@10:
+    // contract.py:67
+    // class SeedCache(ARC4Contract):
+    pushbytes 0x4c5c61ba // method "create()void"
+    txna ApplicationArgs 0
+    match create
+    err
+
+
+// contract.SeedCache.create[routing]() -> void:
+create:
+    // contract.py:95
+    // self.keeper_app.value = UInt64(0)
+    bytec_1 // "keeper_app"
+    intc_0 // 0
+    app_global_put
+    // contract.py:96
+    // self.target_app.value = UInt64(0)
+    bytec_2 // "target_app"
+    intc_0 // 0
+    app_global_put
+    // contract.py:97
+    // self.stored.value = UInt64(0)
+    bytec_3 // "stored"
+    intc_0 // 0
+    app_global_put
+    // contract.py:98
+    // self.last_seen_round.value = UInt64(0)
+    bytec 4 // "last_seen_round"
+    intc_0 // 0
+    app_global_put
+    // contract.py:88
+    // @abimethod(create="require")
+    intc_1 // 1
+    return
+
+
+// contract.SeedCache.set_keeper[routing]() -> void:
+set_keeper:
+    // contract.py:100
+    // @abimethod()
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    btoi
+    // contract.py:111
+    // assert Txn.sender == Global.creator_address, "Only the creator can set the keeper"
+    txn Sender
+    global CreatorAddress
+    ==
+    assert // Only the creator can set the keeper
+    // contract.py:112
+    // assert self.keeper_app.value == 0, "Keeper already set"
+    intc_0 // 0
+    bytec_1 // "keeper_app"
+    app_global_get_ex
+    assert // check self.keeper_app exists
+    !
+    assert // Keeper already set
+    // contract.py:113
+    // assert keeper.id != 0, "Keeper app required"
+    dup
+    assert // Keeper app required
+    // contract.py:114
+    // self.keeper_app.value = keeper.id
+    bytec_1 // "keeper_app"
+    swap
+    app_global_put
+    // contract.py:100
+    // @abimethod()
+    intc_1 // 1
+    return
+
+
+// contract.SeedCache.set_target[routing]() -> void:
+set_target:
+    // contract.py:116
+    // @abimethod()
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    btoi
+    // contract.py:122
+    // assert Txn.sender == Global.creator_address, "Only the creator can set the target"
+    txn Sender
+    global CreatorAddress
+    ==
+    assert // Only the creator can set the target
+    // contract.py:123
+    // assert self.target_app.value == 0, "Target already set"
+    intc_0 // 0
+    bytec_2 // "target_app"
+    app_global_get_ex
+    assert // check self.target_app exists
+    !
+    assert // Target already set
+    // contract.py:124
+    // assert target.id != 0, "Target app required"
+    dup
+    assert // Target app required
+    // contract.py:125
+    // self.target_app.value = target.id
+    bytec_2 // "target_app"
+    swap
+    app_global_put
+    // contract.py:116
+    // @abimethod()
+    intc_1 // 1
+    return
+
+
+// contract.SeedCache.store[routing]() -> void:
+store:
+    pushbytes ""
+    // contract.py:142
+    // keeper = self.keeper_app.value
+    intc_0 // 0
+    bytec_1 // "keeper_app"
+    app_global_get_ex
+    assert // check self.keeper_app exists
+    // contract.py:143
+    // assert keeper != 0, "Keeper not set"
+    dup
+    assert // Keeper not set
+    // contract.py:146
+    // Txn.sender == Application(keeper).address
+    txn Sender
+    swap
+    app_params_get AppAddress
+    assert // application exists
+    ==
+    // contract.py:144-147
+    // # Inner-call sender is the keeper *app account*, not itob(keeper.id).
+    // assert (
+    //     Txn.sender == Application(keeper).address
+    // ), "Only the keeper app may store"
+    assert // Only the keeper app may store
+    // contract.py:149-150
+    // # Beacon not named yet - nothing to read.
+    // target = self.target_app.value
+    intc_0 // 0
+    bytec_2 // "target_app"
+    app_global_get_ex
+    swap
+    dup
+    uncover 2
+    assert // check self.target_app exists
+    // contract.py:151
+    // if target == 0:
+    bnz store_after_if_else@3
+    pop
+    // contract.py:152
+    // return UInt64(0)
+    intc_0 // 0
+
+store_after_inlined_contract.SeedCache.store@19:
+    // contract.py:127
+    // @abimethod()
+    itob
+    bytec 5 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+store_after_if_else@3:
+    // contract.py:154-158
+    // # Cross-app reads are fail-soft: get_ex returns an ok flag and
+    // # never asserts on a missing key or a missing foreign app.
+    // revealed_round, ok_round = AppGlobal.get_ex_uint64(
+    //     Application(target), b"revealed_round"
+    // )
+    dup
+    // contract.py:157
+    // Application(target), b"revealed_round"
+    pushbytes 0x72657665616c65645f726f756e64
+    // contract.py:154-158
+    // # Cross-app reads are fail-soft: get_ex returns an ok flag and
+    // # never asserts on a missing key or a missing foreign app.
+    // revealed_round, ok_round = AppGlobal.get_ex_uint64(
+    //     Application(target), b"revealed_round"
+    // )
+    app_global_get_ex
+    uncover 2
+    // contract.py:160
+    // Application(target), b"revealed_seed"
+    pushbytes 0x72657665616c65645f73656564
+    // contract.py:159-161
+    // revealed_seed, ok_seed = AppGlobal.get_ex_bytes(
+    //     Application(target), b"revealed_seed"
+    // )
+    app_global_get_ex
+    bury 4
+    swap
+    // contract.py:162
+    // if not ok_round or not ok_seed:
+    bz store_if_body@5
+    dig 2
+    bnz store_after_if_else@6
+
+store_if_body@5:
+    popn 2
+    // contract.py:163
+    // return UInt64(0)
+    intc_0 // 0
+    // contract.py:127
+    // @abimethod()
+    b store_after_inlined_contract.SeedCache.store@19
+
+store_after_if_else@6:
+    // contract.py:165-166
+    // # Never revealed, or already on the shelf - no duplicate writes.
+    // if revealed_round == 0:
+    dig 1
+    bnz store_after_if_else@8
+    popn 2
+    // contract.py:167
+    // return UInt64(0)
+    intc_0 // 0
+    // contract.py:127
+    // @abimethod()
+    b store_after_inlined_contract.SeedCache.store@19
+
+store_after_if_else@8:
+    // contract.py:168
+    // if revealed_round == self.last_seen_round.value:
+    intc_0 // 0
+    bytec 4 // "last_seen_round"
+    app_global_get_ex
+    assert // check self.last_seen_round exists
+    dig 2
+    ==
+    bz store_after_if_else@10
+    popn 2
+    // contract.py:169
+    // return UInt64(0)
+    intc_0 // 0
+    // contract.py:127
+    // @abimethod()
+    b store_after_inlined_contract.SeedCache.store@19
+
+store_after_if_else@10:
+    // contract.py:171-173
+    // # A seed is exactly 32 bytes; anything else is not a seed. Bail
+    // # soft rather than let box_replace below overflow the ring.
+    // if revealed_seed.length != SEED_SIZE:
+    dup
+    len
+    pushint 32
+    !=
+    bz store_after_if_else@12
+    popn 2
+    // contract.py:174
+    // return UInt64(0)
+    intc_0 // 0
+    // contract.py:127
+    // @abimethod()
+    b store_after_inlined_contract.SeedCache.store@19
+
+store_after_if_else@12:
+    // contract.py:176-180
+    // # Create the shelf on first use. box_create returns an ok flag;
+    // # if it fails because the box already exists we proceed to
+    // # replace, and if the box is still absent we bail soft instead
+    // # of letting box_replace assert.
+    // if not self.ring:
+    bytec_0 // 0x72696e67
+    box_len
+    bury 1
+    bnz store_after_if_else@18
+    // contract.py:181
+    // if not self.ring.create(size=UInt64(RING_SIZE)):
+    bytec_0 // 0x72696e67
+    pushint 320
+    box_create
+    bnz store_after_if_else@18
+    // contract.py:182
+    // if not self.ring:
+    bytec_0 // 0x72696e67
+    box_len
+    bury 1
+    bnz store_after_if_else@18
+    popn 2
+    // contract.py:183
+    // return UInt64(0)
+    intc_0 // 0
+    // contract.py:127
+    // @abimethod()
+    b store_after_inlined_contract.SeedCache.store@19
+
+store_after_if_else@18:
+    // contract.py:185
+    // stored = self.stored.value
+    intc_0 // 0
+    bytec_3 // "stored"
+    app_global_get_ex
+    assert // check self.stored exists
+    // contract.py:186
+    // slot = stored % RING_SLOTS
+    dup
+    intc_2 // 8
+    %
+    // contract.py:191
+    // slot * SLOT_SIZE, ARC4UInt64(revealed_round).bytes + revealed_seed
+    intc_3 // 40
+    *
+    uncover 3
+    dup
+    cover 3
+    itob
+    uncover 4
+    concat
+    // contract.py:187-190
+    // # Slot payload: 8-byte big-endian round + 32-byte seed. The ARC4
+    // # uint64 .bytes encoding IS itob (big-endian); it packs data here,
+    // # it is never used for auth.
+    // self.ring.replace(
+    bytec_0 // 0x72696e67
+    // contract.py:187-192
+    // # Slot payload: 8-byte big-endian round + 32-byte seed. The ARC4
+    // # uint64 .bytes encoding IS itob (big-endian); it packs data here,
+    // # it is never used for auth.
+    // self.ring.replace(
+    //     slot * SLOT_SIZE, ARC4UInt64(revealed_round).bytes + revealed_seed
+    // )
+    cover 2
+    box_replace
+    // contract.py:193
+    // self.stored.value = stored + 1
+    intc_1 // 1
+    +
+    bytec_3 // "stored"
+    swap
+    app_global_put
+    // contract.py:194
+    // self.last_seen_round.value = revealed_round
+    bytec 4 // "last_seen_round"
+    swap
+    app_global_put
+    // contract.py:195
+    // return self.stored.value
+    intc_0 // 0
+    bytec_3 // "stored"
+    app_global_get_ex
+    assert // check self.stored exists
+    // contract.py:127
+    // @abimethod()
+    b store_after_inlined_contract.SeedCache.store@19
+
+
+// contract.SeedCache.read[routing]() -> void:
+read:
+    // contract.py:197
+    // @abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    btoi
+    // contract.py:205
+    // assert slot < RING_SLOTS, "Slot out of range"
+    dup
+    intc_2 // 8
+    <
+    assert // Slot out of range
+    // contract.py:206
+    // assert self.ring, "Ring box not created"
+    bytec_0 // 0x72696e67
+    box_len
+    bury 1
+    assert // Ring box not created
+    // contract.py:207
+    // return self.ring.extract(slot * SLOT_SIZE, SLOT_SIZE)
+    intc_3 // 40
+    *
+    bytec_0 // 0x72696e67
+    swap
+    intc_3 // 40
+    box_extract
+    // contract.py:197
+    // @abimethod(readonly=True)
+    dup
+    len
+    itob
+    extract 6 2
+    swap
+    concat
+    bytec 5 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
